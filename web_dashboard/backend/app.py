@@ -93,8 +93,8 @@ def get_current_data():
 def get_history(minutes):
     """Get historical data for charts"""
     try:
-        # Look for CSV files in parent directory (where main.py runs)
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Look for CSV files in parent directory (where main.py runs) - go up two levels
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         csv_pattern = os.path.join(base_path, 'fall_detection_data_*.csv')
         csv_files = glob.glob(csv_pattern)
         
@@ -148,8 +148,8 @@ def generate_health_report():
                 'details': 'Gemini API key not configured or health_analyzer.py not found'
             }), 500
         
-        # Find the most recent CSV file
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Find the most recent CSV file - go up two levels from backend folder
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         csv_pattern = os.path.join(base_path, 'fall_detection_data_*.csv')
         csv_files = glob.glob(csv_pattern)
         
@@ -191,7 +191,7 @@ def quick_analysis():
         if not health_ai:
             return jsonify({'error': 'AI analyzer not available'}), 500
         
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         csv_pattern = os.path.join(base_path, 'fall_detection_data_*.csv')
         csv_files = glob.glob(csv_pattern)
         
@@ -214,8 +214,8 @@ def update_sensor_data():
     
     while True:
         try:
-            # Look for the most recent CSV file
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            # Look for the most recent CSV file - go up two levels from backend
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             csv_pattern = os.path.join(base_path, 'fall_detection_data_*.csv')
             csv_files = glob.glob(csv_pattern)
             
@@ -270,7 +270,7 @@ def handle_history_request(data):
     """Handle real-time history requests"""
     minutes = data.get('minutes', 10)
     try:
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         csv_pattern = os.path.join(base_path, 'fall_detection_data_*.csv')
         csv_files = glob.glob(csv_pattern)
         

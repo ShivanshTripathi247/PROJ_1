@@ -5,6 +5,7 @@ import smbus2 as smbus
 from datetime import datetime
 from max30102.max30102 import MAX30102
 from max30102.heartrate_monitor import HeartRateMonitor
+from gps_module import GPSTracker, EmergencyAlertSystem
 import fcntl
 import threading
 import warnings
@@ -104,6 +105,17 @@ except Exception as e:
     spo2_sensor = None
     hr_monitor = None
 
+# Initialize GPS tracking
+print("📡 Initializing GPS...")
+try:
+    gps_tracker = GPSTracker()
+    emergency_system = EmergencyAlertSystem(gps_tracker)
+    print("✅ GPS modules initialized")
+except Exception as e:
+    print(f"⚠️  GPS initialization failed: {e}")
+    gps_tracker = None
+    emergency_system = None
+
 # Initialize fall detector
 if FALL_DETECTION_ENABLED:
     try:
@@ -119,6 +131,15 @@ def log_sensor_data():
         if hr_monitor:
             hr_monitor.start_sensor()
         
+        # Start GPS tracking if available
+        gps_started = False
+        if gps_tracker:
+            gps_started = gps_tracker.start()
+            if gps_started:
+                print("✅ GPS tracking started")
+            else:
+                print("⚠️ GPS failed to start, continuing without GPS")
+        
         # Wait for sensor stabilization
         print("\n🔄 Waiting for sensors to stabilize...")
         if hr_monitor:
@@ -128,6 +149,8 @@ def log_sensor_data():
         if FALL_DETECTION_ENABLED:
             print("🤖 Fall detection is ACTIVE")
             print("🧪 Try dropping/shaking the device to test fall detection!")
+        if gps_started:
+            print("🛰️  GPS tracking is ACTIVE - location data will be included")
         time.sleep(3)
         
         # Create CSV file with timestamp
@@ -215,6 +238,29 @@ def log_sensor_data():
                         fall_predicted = fall_result['fall_detected']
                         fall_confidence = fall_result['confidence']
                         
+                        # Handle fall detection alert
+                        if fall_predicted:
+                            print("🚨 FALL DETECTED! Sending emergency alert...")
+                            
+                            # Prepare fall data for alert
+                            fall_alert_data = {
+                                'confidence': fall_confidence,
+                                'heart_rate': bpm,
+                                'accel_magnitude': accel_magnitude,
+                                'temperature': imu_data['temp'],
+                                'timestamp': datetime_str
+                            }
+                            
+                            # Send emergency alert with GPS location
+                            if gps_started and emergency_system:
+                                try:
+                                    alert_message = emergency_system.send_fall_alert(fall_alert_data)
+                                    print(f"📞 Emergency alert sent: {alert_message}")
+                                except Exception as e:
+                                    print(f"❌ Failed to send emergency alert: {e}")
+                            else:
+                                print("⚠️ Fall detected but GPS/Emergency system not available")
+                        
                         if 'features' in fall_result:
                             accel_magnitude = fall_result['features'].get('accel_magnitude', 0.0)
                             gyro_magnitude = fall_result['features'].get('gyro_magnitude', 0.0)
@@ -286,8 +332,15 @@ def log_sensor_data():
                 
     except KeyboardInterrupt:
         print(f"\n\n🛑 Data collection stopped by user")
+        
+        # Clean up sensors
         if hr_monitor:
             hr_monitor.sensor.shutdown()
+        
+        # Clean up GPS when stopping
+        if gps_started and gps_tracker:
+            print("📡 Stopping GPS tracking...")
+            gps_tracker.stop()
         
         # Final CSV verification
         try:
@@ -300,6 +353,8 @@ def log_sensor_data():
                 
                 if FALL_DETECTION_ENABLED:
                     print(f"🤖 Fall detection was active during recording")
+                if gps_started:
+                    print(f"🛰️  GPS tracking was active during recording")
                     
         except Exception as e:
             print(f"❌ Error verifying CSV file: {e}")

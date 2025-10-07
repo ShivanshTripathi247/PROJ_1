@@ -22,8 +22,8 @@ class HealthAnalyzer:
             # Calculate health metrics
             analysis = {
                 'session_info': {
-                    'duration_minutes': (df['timestamp'].max() - df['timestamp'].min()) / 60,
-                    'total_samples': len(df),
+                    'duration_minutes': float((df['timestamp'].max() - df['timestamp'].min()) / 60),
+                    'total_samples': int(len(df)),
                     'start_time': df.iloc[0]['datetime'] if len(df) > 0 else 'Unknown',
                     'end_time': df.iloc[-1]['datetime'] if len(df) > 0 else 'Unknown'
                 },
@@ -53,25 +53,25 @@ class HealthAnalyzer:
         
         return {
             'status': 'analyzed',
-            'average': round(valid_hr.mean(), 1),
-            'min': round(valid_hr.min(), 1),
-            'max': round(valid_hr.max(), 1),
-            'coverage': round(len(valid_hr) / len(df) * 100, 1),
-            'variability': round(valid_hr.std(), 1) if len(valid_hr) > 1 else 0,
+            'average': round(float(valid_hr.mean()), 1),
+            'min': round(float(valid_hr.min()), 1),
+            'max': round(float(valid_hr.max()), 1),
+            'coverage': round(float(len(valid_hr) / len(df) * 100), 1),
+            'variability': round(float(valid_hr.std()), 1) if len(valid_hr) > 1 else 0,
             'zones': {
-                'resting': len(valid_hr[valid_hr < 70]),
-                'moderate': len(valid_hr[(valid_hr >= 70) & (valid_hr < 85)]),
-                'elevated': len(valid_hr[valid_hr >= 85])
+                'resting': int(len(valid_hr[valid_hr < 70])),
+                'moderate': int(len(valid_hr[(valid_hr >= 70) & (valid_hr < 85)])),
+                'elevated': int(len(valid_hr[valid_hr >= 85]))
             }
         }
     
     def _analyze_movement(self, df):
         """Analyze movement and activity patterns"""
         return {
-            'avg_acceleration': round(df['accel_magnitude'].mean(), 3),
-            'max_acceleration': round(df['accel_magnitude'].max(), 3),
-            'movement_variance': round(df['accel_magnitude'].std(), 3),
-            'high_movement_events': len(df[df['accel_magnitude'] > 1.5]),
+            'avg_acceleration': round(float(df['accel_magnitude'].mean()), 3),
+            'max_acceleration': round(float(df['accel_magnitude'].max()), 3),
+            'movement_variance': round(float(df['accel_magnitude'].std()), 3),
+            'high_movement_events': int(len(df[df['accel_magnitude'] > 1.5])),
             'activity_level': self._classify_activity_level(df['accel_magnitude'])
         }
     
@@ -80,9 +80,9 @@ class HealthAnalyzer:
         fall_events = df[df['fall_predicted'] == True]
         
         return {
-            'total_falls_detected': len(fall_events),
+            'total_falls_detected': int(len(fall_events)),
             'fall_timestamps': fall_events['datetime'].tolist() if len(fall_events) > 0 else [],
-            'avg_confidence': round(df['fall_confidence'].mean(), 3),
+            'avg_confidence': round(float(df['fall_confidence'].mean()), 3),
             'false_positive_risk': 'low' if len(fall_events) == 0 else 'moderate'
         }
     
@@ -93,12 +93,12 @@ class HealthAnalyzer:
         return {
             'spo2': {
                 'available': len(valid_spo2) > 0,
-                'average': round(valid_spo2.mean(), 1) if len(valid_spo2) > 0 else None,
-                'coverage': round(len(valid_spo2) / len(df) * 100, 1) if len(valid_spo2) > 0 else 0
+                'average': round(float(valid_spo2.mean()), 1) if len(valid_spo2) > 0 else None,
+                'coverage': round(float(len(valid_spo2) / len(df) * 100), 1) if len(valid_spo2) > 0 else 0
             },
             'temperature': {
-                'average': round(df['temp'].mean(), 1),
-                'stable': df['temp'].std() < 1.0
+                'average': round(float(df['temp'].mean()), 1),
+                'stable': bool(df['temp'].std() < 1.0)
             }
         }
     

@@ -13,6 +13,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { MapPin, Navigation as NavigationIcon, Satellite, ExternalLink } from 'lucide-react';
 import { Home, FileText, Activity, Heart, TrendingUp, Shield } from 'lucide-react';
 import HealthReport from './components/HealthReport';
 import './App.css';
@@ -28,6 +29,105 @@ ChartJS.register(
   Filler
 );
 
+const GPSLocationCard = ({ gpsData }) => {
+  const getStatusClass = (status) => {
+    switch(status) {
+      case 'fixed': return 'fixed';
+      case 'searching': return 'searching';
+      case 'offline': return 'offline';
+      case 'initializing': return 'initializing';
+      default: return 'offline';
+    }
+  };
+
+  const getEmergencyReadyStatus = () => {
+    return gpsData.latitude && gpsData.longitude ? 'ready' : 'not-ready';
+  };
+
+  const generateMapsLink = () => {
+    if (gpsData.latitude && gpsData.longitude) {
+      return `https://maps.google.com/maps?q=${gpsData.latitude},${gpsData.longitude}`;
+    }
+    return null;
+  };
+
+  const formatCoordinate = (coord, decimals = 6) => {
+    return coord ? coord.toFixed(decimals) : '----.------';
+  };
+
+  return (
+    <div className={`reading-card gps-location ${getStatusClass(gpsData.gps_status)}`}>
+      <div className="reading-header">
+        <MapPin size={24} />
+        <div className="reading-info">
+          <h3>GPS Location</h3>
+          <span className={`gps-status-indicator ${getStatusClass(gpsData.gps_status)}`}>
+            <Satellite size={12} />
+            {gpsData.gps_status || 'offline'}
+          </span>
+        </div>
+      </div>
+      
+      <div className={`reading-value location-text ${!gpsData.latitude ? 'no-signal' : ''}`}>
+        {gpsData.latitude && gpsData.longitude 
+          ? (
+            <div className="coordinate-display">
+              <div className="coordinate-row">
+                <span className="coordinate-label">Lat:</span>
+                <span className="coordinate-value">{formatCoordinate(gpsData.latitude)}</span>
+              </div>
+              <div className="coordinate-row">
+                <span className="coordinate-label">Lon:</span>
+                <span className="coordinate-value">{formatCoordinate(gpsData.longitude)}</span>
+              </div>
+            </div>
+          )
+          : '---.----, ---.----'
+        }
+      </div>
+      
+      <div className="reading-unit">Latitude, Longitude</div>
+      
+      <div className="reading-trend">
+        <div className={`emergency-ready ${getEmergencyReadyStatus()}`}>
+          <NavigationIcon size={16} />
+          <span>Emergency Ready: {gpsData.latitude ? 'Yes' : 'No'}</span>
+          <div className="status-dot"></div>
+        </div>
+      </div>
+
+      {/* Satellite count */}
+      {gpsData.satellites !== undefined && (
+        <div className="satellite-indicator">
+          <Satellite size={12} />
+          <span>{gpsData.satellites} satellites</span>
+          <div className="satellite-bars">
+            {[...Array(8)].map((_, i) => (
+              <div 
+                key={i} 
+                className={`satellite-bar ${i < (gpsData.satellites || 0) ? 'active' : ''}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Maps link button */}
+      {generateMapsLink() && (
+        <a 
+          href={generateMapsLink()} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="maps-link-btn"
+        >
+          <ExternalLink size={14} />
+          View on Maps
+        </a>
+      )}
+    </div>
+  );
+};
+
 // Dashboard Component (Your main monitoring view)
 const Dashboard = () => {
   const [currentData, setCurrentData] = useState({
@@ -40,6 +140,18 @@ const Dashboard = () => {
     temperature: 0,
     datetime: '--:--:--',
     device_status: 'offline'
+  });
+  
+  const [gpsData, setGpsData] = useState({
+    latitude: null,           // 51.5074
+    longitude: null,          // -0.1278
+    altitude: null,           // 35.5 (meters)
+    gps_status: 'offline',    // 'fixed', 'searching', 'offline', 'initializing'
+    satellites: 0,            // Number of satellites
+    fix_quality: 0,           // GPS fix quality (0-8)
+    speed: null,              // Speed in km/h
+    course: null,             // Direction in degrees
+    timestamp: null           // Last update timestamp
   });
   
   const [chartData, setChartData] = useState({
@@ -89,7 +201,7 @@ const Dashboard = () => {
       const hrData = [...(prevData.datasets[0]?.data || []), newData.heart_rate];
       const accelData = [...(prevData.datasets[1]?.data || []), newData.accel_magnitude];
       const gyroData = [...(prevData.datasets[2]?.data || []), newData.gyro_magnitude];
-      
+
       // Keep only last 30 points for better performance
       const maxPoints = 30;
       if (newLabels.length > maxPoints) {
@@ -222,7 +334,7 @@ const Dashboard = () => {
       duration: 300
     }
   };
-
+  
   const getStatusColor = (status) => {
     switch(status) {
       case 'online': return '#4CAF50';
@@ -357,6 +469,7 @@ const Dashboard = () => {
             <span>AI Monitoring Active</span>
           </div>
         </div>
+        <GPSLocationCard gpsData={gpsData} />
       </div>
       
       {/* Real-time Chart */}
@@ -401,8 +514,8 @@ const Dashboard = () => {
   );
 };
 
-// Navigation Component
-const Navigation = () => {
+// Main Navigation Component
+const MainNavigation = () => {
   const location = useLocation();
   
   return (
@@ -439,7 +552,7 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Navigation />
+        <MainNavigation />
         
         <main className="app-main">
           <Routes>
