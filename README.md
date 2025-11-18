@@ -4,9 +4,12 @@
 
 This project implements a real-time health and fall detection system based on Raspberry Pi, integrating multiple physiological sensors and machine learning to monitor vital signs and detect falls. The system combines edge embedded AI with cloud-powered language model analytics and GPS-enabled emergency alerts, providing a full-stack solution from data acquisition to actionable health insights and rapid response.
 
+<img src="web_dashboard/health-dashboard/public/3.png" width="400" height="200"> <img src="web_dashboard/health-dashboard/public/1.png" width="400" height="200"> 
+<img src="web_dashboard/health-dashboard/public/4.png" width="400" height="200"> <img src="web_dashboard/health-dashboard/public/2.png" width="400" height="200">
 ---
 
 ## Architecture
+![Architecture](web_dashboard/health-dashboard/public/f7.png "San Juan Mountains")
 
 ### Hardware Layer
 
@@ -27,6 +30,7 @@ This project implements a real-time health and fall detection system based on Ra
 - **Gemini LLM Integration**: Google's Gemini language model is integrated to generate AI-powered personalized health reports by analyzing sensor datasets.
 
 ### Frontend Layer
+![Architecture](web_dashboard/health-dashboard/public/f4.png "San Juan Mountains")
 
 - **React Dashboard**: Displays real-time vitals, detected events, and live sensor graphs.
 - **AI Health Reports**: Interactive report page displaying detailed AI-generated summaries, risk assessments, and actionable recommendations.
